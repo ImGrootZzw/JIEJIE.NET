@@ -8,8 +8,9 @@ using System.Reflection;
 using System.Runtime.Remoting;
 using System.Security;
 using System.Security.Permissions;
+using System.Linq;
 
-#if ! DOTNETCORE
+#if !DOTNETCORE
 [assembly: AssemblyTitle("JieJie.NETConsoleApplication")]
 
 #endif
@@ -73,77 +74,96 @@ namespace JIEJIE
             //    }
             //}
             /////* test data **************************/
-            //if (args == null || args.Length == 0)
-            //{
-            //    args = new string[] {
-            //     //   @"d:\temp3\RFLeaderboards.dll",
-            //    //@"translatestack=E:\Source\DCSoftDemoCenter\08代码\旧版演示程序\DCSoft.DCWriterSimpleDemo\Lib\DCSoft.Writer.ForWinForm.dll.map.xml",
-            //    //@"E:\Source\DCSoftDemoCenter\08代码\旧版演示程序\DCSoft.ASPNETDemo\bin\DCSoft.Writer.ForASPNET.dll",
-            //    //@"E:\Source\DCSoft\08代码\DCSoft\DCWriterForASPNET\bin\debug\DCSoft.Writer.ForASPNET.dll",
-            //    //@"C:\Users\yfyuan\source\repos\WindowsFormsApp13\bin\Debug\WindowsFormsApp13.exe",
-            //    //@"E:\Source\DCSoftDemoCenter\08代码\旧版演示程序\Bin\DCSoft.WinFormDemo.exe",
-            //    //@"E:\Source\DCSoft\08代码\DCSoft\DCSoft.Common\bin\Debug\DCSoft.Common.dll",
-            //    //@"E:\Source\DCSoft\08代码\DCSoft\DCWriterForWinForm\bin\debug\DCSoft.Writer.ForWinForm.dll",
-            //    //@"E:\Source\DCSoft.WASM.Publish\bin\Release\net7.0\DCSoft.WASM.dll",
-            //    @"D:\DCSoft.WASM.Publish\bin\Debug\net7.0\DCSoft.WASM.dll",
-            //    //@"E:\Source\DCSoft\08代码\DCSoft\DCSoft.WASM\bin\Debug\net7.0\DCSoft.WASM.dll",
-            //    //@"E:\Source\DCSoft\08代码\DCSoft\bin\Debug\net7.0\DCSoft.Writer.ForWASM.dll",
-            //    //@"C:\Users\yfyuan\source\repos\ClassLibrary3\bin\Debug\net7.0\ClassLibrary3.dll",
-            //    //@"C:\Users\yfyuan\.nuget\packages\dcsoft.writer.forwasm\1.2023.3.10\lib\net7.0\DCSoft.Writer.ForWASM.dll",
-            //    //@"C:\Users\yfyuan\source\repos\ClassLibrary2\bin\Debug\net7.0\ClassLibrary2.dll",
-            //    //@"E:\Source\DCSoft\08代码\DCSoft\DCSoft.WinForms\Source\bin\Debug\DCSoft.WinForms.dll",
-            //    //@"E:\Source\DCSoft\08代码\DCSoft\DCSoft.Data\Source\bin\Debug\DCSoft.Data.dll",
-            //        //@"D:\temp3\DCSoft.Writer.ForWinForm.dll",
-            //    //@"E:\Source\DCSoft\08代码\DCSoft\DCSoft.Drawing\Source\bin\Debug\DCSoft.Drawing.dll",
-            //    //@"E:\Source\DCSoft\08代码\DCSoft\DCSoft.Writer.Core\bin\debug\DCSoft.Writer.Core.dll",
-            //    //@"E:\Source\DCSoft\08代码\DCSoft\DCWriter专用版\DCSoft.Writer.ForASPNETCore_All\bin_netcore\debug\netcoreapp3.0\DCSoft.Writer.ForASPNETCore.dll",
-            //   // @"d:\temp\DecryptVSEncrypt.exe",
-            //        //@"inputtemppath=D:\temp3\JieJie.NET_Temp",
-            //    "outputmapxml",
-            //    @"output=E:\Source\DCSoft.WASM.Publish\bin\Release\net7.0",
-            //    //@"output=E:\Source\DCSoftDemoCenter\08代码\旧版演示程序\DCSoft.ASPNETDemo\DCLib",
-            //    //@"output=E:\Source\DCSoft\08代码\DCSoft\DCWriter专用版\MyWriterMvcCore\wwwroot\wasm\_framework",
-            //    //@"output=E:\Source\DCSoft\08代码\DCSoft\DCSoft.WASM\bin\Debug\net7.0\wwwroot\_framework",
-            //    //@"output=E:\Source\DCSoft\08代码\ConsoleApp1\Lib",
-            //    //@"output=C:\Users\yfyuan\.nuget\packages\dcsoft.writer.forwasm\1.2023.3.10\lib\net7.0",
-            //    //@"output=E:\Source\DCSoft\08代码\DCSoft\DCSoft.WASMTest\Lib",
-            //    //@"output=C:\Users\yfyuan\.nuget\packages\dcsoft.writer.forwasm\1.2023.3.10\lib\net7.0\",
-            //    //@"output=E:\Source\DCSoftDemoCenter\08代码\旧版演示程序\DCSoft.DCWriterSimpleDemo\Lib",
-            //    //@"output=D:\temp\DCWriterCoreMVCDemo30\DCWriterCoreMVCDemo",
-            //    @"snk=E:\Source\DCSoft\08代码\DCSoft\yyf.snk",
-            //    @"merge=*",
-            //    //".subsystem=3",
-            //    //".corflags=1",
-            //    "switch=+rename,-controlflow,+strings,+resources,+memberorder,+removemember,-allocationcallstack",
-            //    "SpecifyRename=DCSoft.Writer.Controls.IWASMParent,DCSoft.Common.FileHeaderHelper,DCSoft.Common.TickSpanTable,DCSoft.Common.TypeConverterSupportProperties,DCSoft.Common.ListDebugView,DCSoft.Writer.Controls.WASMEnvironment,DCSoft.Writer.Dom.Undo.XTextDocumentUndoList,DCSoft.Writer.Undo.*,DCSoft.Writer.Serialization.ArrayXmlReader,DCSoft.Drawing.DefaultFontNameValueAttribute",
-            //    "RemoveTypes=DCSystem_Resources.*,DCSoft.Common.SafeCreateResourceManager",
-            //    //"switch=+hightstrings,-rename" ,
-            //    //"switch=-rename" ,
-            //    //"prefixfortyperename=_jiejie._0",
-            //    //"prefixformemberrename=_jj",
-            //    "prefixfortyperename=zzz.z0ZzZz",
-            //    "prefixformemberrename=z0",
-            //    //"debugmode",
-            //    @"ResourceNameNeedEncrypt=DCSoft\.Chart.Design\.Images\.ChartViewStyle\s*",
-            //    "RemoveCustomAttributeTypeFullnames=System.Runtime.InteropServices.ComVisibleAttribute,DCSoft.Common.DCDescriptionAttribute,System.Runtime.InteropServices.GuidAttribute,DCSoft.Common.DCDisplayNameAttribute,System.ComponentModel.CategoryAttribute,DCSoft.Common.DCPublishAPIAttribute,System.Xml.Serialization.XmlTypeAttribute,System.Xml.Serialization.XmlIncludeAttribute,System.SerializableAttribute,System.ComponentModel.BrowsableAttribute,System.Xml.Serialization.XmlElementAttribute,System.Xml.Serialization.XmlAttributeAttribute,System.Xml.Serialization.XmlIgnoreAttribute,System.ObsoleteAttribute,System.ComponentModel.EditorBrowsableAttribute,DCSoft.Common.DCPublishAPIAttribute,DCSoft.Common.DCXSDAttribute,System.Drawing.ToolboxBitmapAttribute",
-            //    "BlazorWebAssembly",
-            //    //"PerformanceCounter",
-            //    "DeadCode=All",
-            //    "RemoveDeadCodeTypes=DCSoft.Writer.NewSerialization.NewSerializer20220801,DCSoft.Writer.NewSerialization.JsonSerializer20220818",
-            //    "pause",
-            //    //"notnativeconsole",
-            //    //"OnlyForReleaseAssembly"
-            //    };
-            //}
+            if (args == null || args.Length == 0)
+            {
+                args = new string[] {
+                 //   @"d:\temp3\RFLeaderboards.dll",
+                //@"translatestack=E:\Source\DCSoftDemoCenter\08代码\旧版演示程序\DCSoft.DCWriterSimpleDemo\Lib\DCSoft.Writer.ForWinForm.dll.map.xml",
+                //@"E:\Source\DCSoftDemoCenter\08代码\旧版演示程序\DCSoft.ASPNETDemo\bin\DCSoft.Writer.ForASPNET.dll",
+                //@"E:\Source\DCSoft\08代码\DCSoft\DCWriterForASPNET\bin\debug\DCSoft.Writer.ForASPNET.dll",
+                //@"C:\Users\yfyuan\source\repos\WindowsFormsApp13\bin\Debug\WindowsFormsApp13.exe",
+                //@"E:\Source\DCSoftDemoCenter\08代码\旧版演示程序\Bin\DCSoft.WinFormDemo.exe",
+                //@"E:\Source\DCSoft\08代码\DCSoft\DCSoft.Common\bin\Debug\DCSoft.Common.dll",
+                //@"E:\Source\DCSoft\08代码\DCSoft\DCWriterForWinForm\bin\debug\DCSoft.Writer.ForWinForm.dll",
+                //@"E:\Source\DCSoft.WASM.Publish\bin\Release\net7.0\DCSoft.WASM.dll",
+                //@"E:\Source\DCSoft\08代码\DCSoft\DCSoft.WASM\bin\Debug\net7.0\DCSoft.WASM.dll",
+                //@"E:\Source\DCSoft\08代码\DCSoft\bin\Debug\net7.0\DCSoft.Writer.ForWASM.dll",
+                //@"C:\Users\yfyuan\source\repos\ClassLibrary3\bin\Debug\net7.0\ClassLibrary3.dll",
+                //@"C:\Users\yfyuan\.nuget\packages\dcsoft.writer.forwasm\1.2023.3.10\lib\net7.0\DCSoft.Writer.ForWASM.dll",
+                //@"C:\Users\yfyuan\source\repos\ClassLibrary2\bin\Debug\net7.0\ClassLibrary2.dll",
+                //@"E:\Source\DCSoft\08代码\DCSoft\DCSoft.WinForms\Source\bin\Debug\DCSoft.WinForms.dll",
+                //@"E:\Source\DCSoft\08代码\DCSoft\DCSoft.Data\Source\bin\Debug\DCSoft.Data.dll",
+                    //@"D:\temp3\DCSoft.Writer.ForWinForm.dll",
+                //@"E:\Source\DCSoft\08代码\DCSoft\DCSoft.Drawing\Source\bin\Debug\DCSoft.Drawing.dll",
+                //@"E:\Source\DCSoft\08代码\DCSoft\DCSoft.Writer.Core\bin\debug\DCSoft.Writer.Core.dll",
+                //@"E:\Source\DCSoft\08代码\DCSoft\DCWriter专用版\DCSoft.Writer.ForASPNETCore_All\bin_netcore\debug\netcoreapp3.0\DCSoft.Writer.ForASPNETCore.dll",
+               // @"d:\temp\DecryptVSEncrypt.exe",
+                @"inputpath=D:\Tools\JIEJIE\input",
+                @"outputpath=D:\Tools\JIEJIE\output",
+                //@"D:\Tools\JIEJIE\input\CoreWebAPI.Extensions.dll",
+                //@"output=D:\Tools\JIEJIE\output",
+                //@"inputtemppath=D:\Tools\JIEJIE\input",
+                "outputmapxml",
+                //@"output=E:\Source\DCSoftDemoCenter\08代码\旧版演示程序\DCSoft.ASPNETDemo\DCLib",
+                //@"output=E:\Source\DCSoft\08代码\DCSoft\DCWriter专用版\MyWriterMvcCore\wwwroot\wasm\_framework",
+                //@"output=E:\Source\DCSoft\08代码\DCSoft\DCSoft.WASM\bin\Debug\net7.0\wwwroot\_framework",
+                //@"output=E:\Source\DCSoft\08代码\ConsoleApp1\Lib",
+                //@"output=C:\Users\yfyuan\.nuget\packages\dcsoft.writer.forwasm\1.2023.3.10\lib\net7.0",
+                //@"output=E:\Source\DCSoft\08代码\DCSoft\DCSoft.WASMTest\Lib",
+                //@"output=C:\Users\yfyuan\.nuget\packages\dcsoft.writer.forwasm\1.2023.3.10\lib\net7.0\",
+                //@"output=E:\Source\DCSoftDemoCenter\08代码\旧版演示程序\DCSoft.DCWriterSimpleDemo\Lib",
+                //@"output=D:\temp\DCWriterCoreMVCDemo30\DCWriterCoreMVCDemo",
+                //@"snk=D:\Tools\dnSpy-master\dnSpy-master\dnSpy.snk",
+                //@"merge=*",
+                //".subsystem=3",
+                //".corflags=1",
+                @"switch=+contorlfow,+resources,+memberorder,-rename,+string",
+                //"switch=-rename,-controlflow,+strings,+resources,+memberorder,+removemember,-allocationcallstack",
+                //"SpecifyRename=DCSoft.Writer.Controls.IWASMParent,DCSoft.Common.FileHeaderHelper,DCSoft.Common.TickSpanTable,DCSoft.Common.TypeConverterSupportProperties,DCSoft.Common.ListDebugView,DCSoft.Writer.Controls.WASMEnvironment,DCSoft.Writer.Dom.Undo.XTextDocumentUndoList,DCSoft.Writer.Undo.*,DCSoft.Writer.Serialization.ArrayXmlReader,DCSoft.Drawing.DefaultFontNameValueAttribute",
+                //"RemoveTypes=DCSystem_Resources.*,DCSoft.Common.SafeCreateResourceManager",
+                //"switch=+hightstrings,-rename" ,
+                //"switch=-rename" ,
+                //"prefixfortyperename=_jiejie._0",
+                //"prefixformemberrename=_jj",
+                "prefixfortyperename=zzz.z0ZzZz",
+                "prefixformemberrename=z0",
+                "mapxml",
+                //"debugmode",
+                @"ResourceNameNeedEncrypt=DCSoft\.Chart.Design\.Images\.ChartViewStyle\s*",
+                "RemoveCustomAttributeTypeFullnames=System.Runtime.InteropServices.ComVisibleAttribute,DCSoft.Common.DCDescriptionAttribute,System.Runtime.InteropServices.GuidAttribute,DCSoft.Common.DCDisplayNameAttribute,System.ComponentModel.CategoryAttribute,DCSoft.Common.DCPublishAPIAttribute,System.Xml.Serialization.XmlTypeAttribute,System.Xml.Serialization.XmlIncludeAttribute,System.SerializableAttribute,System.ComponentModel.BrowsableAttribute,System.Xml.Serialization.XmlElementAttribute,System.Xml.Serialization.XmlAttributeAttribute,System.Xml.Serialization.XmlIgnoreAttribute,System.ObsoleteAttribute,System.ComponentModel.EditorBrowsableAttribute,DCSoft.Common.DCPublishAPIAttribute,DCSoft.Common.DCXSDAttribute,System.Drawing.ToolboxBitmapAttribute",
+                //"BlazorWebAssembly",
+                //"PerformanceCounter",
+                "DeadCode=All",
+                //"RemoveDeadCodeTypes=DCSoft.Writer.NewSerialization.NewSerializer20220801,DCSoft.Writer.NewSerialization.JsonSerializer20220818",
+                //"pause",
+                //"notnativeconsole",
+                //"OnlyForReleaseAssembly"
+                };
+            }
             //var p = System.Diagnostics.Process.GetCurrentProcess();
             //Console.WriteLine("Tittttttttt:" + p.. .StartInfo.UseShellExecute);
             //Console.WriteLine("aaa:" + Environment.UserInteractive);
             //return;
             ///***************************************/
             var prj = new JieJieProject();
+            ParseCommandLines(args, prj);
+            prj.OutpuptMapXml = true;
+            if ( prj.InputAssemblyFilePath != null )
+            {
+                var dlls = Directory.EnumerateFiles(prj.InputAssemblyFilePath, "*.dll", SearchOption.AllDirectories).ToList();
+                foreach (var dll in dlls)
+                {
+                    prj.OutputAssemblyFileName = dll.Substring(0, dll.LastIndexOf("\\")).Replace(prj.InputAssemblyFilePath, prj.OutputAssemblyFilePath);
+                    if(!Directory.Exists(prj.OutputAssemblyFileName))
+                        Directory.CreateDirectory(prj.OutputAssemblyFileName);
+                    prj.InputAssemblyFileName = dll;
+
+                    prj.Run();
+                }
+
+            }
             //SelfPerformanceCounterForTest.Start();
-            ParseCommandLines(args , prj );
-            prj.Run();
+            //prj.Run();
             //SelfPerformanceCounterForTest.Stop();
 
 
@@ -192,6 +212,20 @@ namespace JIEJIE
                             case "input":
                                 prj.InputAssemblyFileName = argValue;
                                 if (File.Exists(prj.InputAssemblyFileName) == false)
+                                {
+                                    return;
+                                }
+                                break;
+                            case "inputpath":
+                                prj.InputAssemblyFilePath = argValue;
+                                if (Directory.Exists(prj.InputAssemblyFilePath) == false)
+                                {
+                                    return;
+                                }
+                                break;
+                            case "outputpath":
+                                prj.OutputAssemblyFilePath = argValue;
+                                if (Directory.Exists(prj.OutputAssemblyFilePath) == false)
                                 {
                                     return;
                                 }
