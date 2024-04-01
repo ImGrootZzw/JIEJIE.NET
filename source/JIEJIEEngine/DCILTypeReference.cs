@@ -805,6 +805,7 @@ namespace JIEJIE
                 return this.Mode == DCILTypeMode.Primitive;
             }
         }
+        public bool IsParams { get; set; }
 
         public DCILTypeReference(string name)
         {
@@ -1069,10 +1070,14 @@ namespace JIEJIE
 
             }
 
+            if (this.Name.Equals("WriteLog") || this.Name.Equals("App"))
+            {
+
+            }
             switch (this.Mode)
             {
                 case DCILTypeMode.Primitive:
-                    writer.Write(this._NativeType.Name);
+                    writer.Write(this._NativeType.Name); // 添加可选参数 params
                     //writer.Write( FixTypeName( this.Name , useShortName));
                     break;
                 case DCILTypeMode.GenericTypeInMethodDefine:

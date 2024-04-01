@@ -1050,100 +1050,113 @@ namespace JIEJIE
             reader.Position = 0;
             while (reader.HasContentLeft())
             {
+
                 string strWord = reader.ReadWord();
                 if (strWord == null)
                 {
                     break;
                 }
-                switch (strWord)
+                try
                 {
-                    case DCILModule.TagName_Module:
-                        {
-                            var module = new DCILModule(reader);
-                            if (module.IsExtern == false)
+                    switch (strWord)
+                    {
+                        case DCILModule.TagName_Module:
                             {
-                                if (module.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
-                                    || module.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                                var module = new DCILModule(reader);
+                                if (module.IsExtern == false)
                                 {
-                                    this._Name = module.Name.Substring(0, module.Name.Length - 4);
+                                    if (module.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
+                                        || module.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        this._Name = module.Name.Substring(0, module.Name.Length - 4);
+                                    }
+                                }
+                                this.Modules.Add(module);
+                            }
+                            break;
+                        case DCILMResource.TagName_mresource:
+                            {
+                                var item = new DCILMResource(this, reader);
+                                this.Resouces[item.Name] = item;
+                                //this.ChildNodes.Add(item);
+                            }
+                            break;
+                        case DCILAssembly.TagName:
+                            var asm = new DCILAssembly();
+                            asm.LoadHeader(reader);
+                            bool match = false;
+                            foreach (var item in this.Assemblies)
+                            {
+                                if (item.Name == asm.Name)
+                                {
+                                    item.LoadContent(reader);
+                                    match = true;
                                 }
                             }
-                            this.Modules.Add(module);
-                        }
-                        break;
-                    case DCILMResource.TagName_mresource:
-                        {
-                            var item = new DCILMResource(this, reader);
-                            this.Resouces[item.Name] = item;
-                            //this.ChildNodes.Add(item);
-                        }
-                        break;
-                    case DCILAssembly.TagName:
-                        var asm = new DCILAssembly();
-                        asm.LoadHeader(reader);
-                        bool match = false;
-                        foreach (var item in this.Assemblies)
-                        {
-                            if (item.Name == asm.Name)
+                            if (match == false)
                             {
-                                item.LoadContent(reader);
-                                match = true;
+                                asm.LoadContent(reader);
+                                this.Assemblies.Add(asm);
                             }
-                        }
-                        if (match == false)
-                        {
-                            asm.LoadContent(reader);
-                            this.Assemblies.Add(asm);
-                        }
-                        break;
-                    case DCILCustomAttribute.TagName_custom:
-                        {
-                            base.ReadCustomAttribute(reader);
-                        }
-                        break;
-                    case DCILData.TagName_Data:
-                        {
-                            this.ILDatas.Add(new DCILData(reader));
-                        }
-                        break;
-                    case DCILClass.TagName:
-                        {
-                            var cls = new DCILClass();
-                            cls.LoadHeader(reader);
-                            if (cls.Name != null && cls.Name.Length > 0)
+                            break;
+                        case DCILCustomAttribute.TagName_custom:
                             {
-                                DCILClass oldCls = null;
-                                if (classMap.TryGetValue(cls.Name, out oldCls))
+                                base.ReadCustomAttribute(reader);
+                            }
+                            break;
+                        case DCILData.TagName_Data:
+                            {
+                                this.ILDatas.Add(new DCILData(reader));
+                            }
+                            break;
+                        case DCILClass.TagName:
+                            {
+                                var cls = new DCILClass();
+                                cls.LoadHeader(reader);
+                                if (cls.Name != null && cls.Name.Length > 0)
                                 {
-                                    oldCls.LoadContent(reader);
-                                }
-                                else
-                                {
-                                    cls.LoadContent(reader);
-                                    this.Classes.Add(cls);
-                                    classMap[cls.Name] = cls;
-                                    reader.NumOfClass++;
+                                    if (cls.Name.Equals("CoreWebAPI.Common.LogHelper.SerilogHelper", StringComparison.CurrentCultureIgnoreCase))
+                                    {
+
+                                    }
+                                    DCILClass oldCls = null;
+                                    if (classMap.TryGetValue(cls.Name, out oldCls))
+                                    {
+                                        oldCls.LoadContent(reader);
+                                    }
+                                    else
+                                    {
+                                        cls.LoadContent(reader);
+                                        this.Classes.Add(cls);
+                                        classMap[cls.Name] = cls;
+                                        reader.NumOfClass++;
+                                    }
                                 }
                             }
-                        }
-                        break;
-                    //case "corflags":
-                    //    {
-                    //        string str = reader.ReadInstructionContent();
-                    //        int v2 = 0;
-                    //        if(Int32.TryParse( str , out v2 ))
-                    //        {
-                    //            this.CorFlags = (DCILRuntimeFlags) v2;
-                    //        }
-                    //    }
-                    //    break;
-                    default:
-                        {
-                            var obj = new DCILUnknowObject(strWord, reader);
-                            SetCorFlags(obj.Name, obj.Data);
-                            this.UnknowObjects.Add(obj);
-                        }
-                        break;
+                            break;
+                        //case "corflags":
+                        //    {
+                        //        string str = reader.ReadInstructionContent();
+                        //        int v2 = 0;
+                        //        if(Int32.TryParse( str , out v2 ))
+                        //        {
+                        //            this.CorFlags = (DCILRuntimeFlags) v2;
+                        //        }
+                        //    }
+                        //    break;
+                        default:
+                            {
+                                var obj = new DCILUnknowObject(strWord, reader);
+                                SetCorFlags(obj.Name, obj.Data);
+                                this.UnknowObjects.Add(obj);
+                            }
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                    throw;
                 }
             }
             DCILMResource.LoadData(this.Resouces.Values, Path.GetDirectoryName(reader.FileName));
@@ -1310,6 +1323,7 @@ namespace JIEJIE
         public int ModifiedCount = 0;
         public List<string> ReferenceAssemblies = new List<string>();
         public byte[] Win32ResData = null;
+
         public SortedDictionary<string, DCILMResource> Resouces = new SortedDictionary<string, DCILMResource>();
 
         public void CleanFieldValue()

@@ -62,6 +62,14 @@ namespace JIEJIE
         /// </summary>
         public string InputAssemblyFileName = null;
         /// <summary>
+        /// 输入的程序集路径
+        /// </summary>
+        public string InputAssemblyFilePath = null;
+        /// <summary>
+        /// 输入的程序集路径
+        /// </summary>
+        public string OutputAssemblyFilePath = null;
+        /// <summary>
         /// 指定的输出的程序集的文件名或者目录名
         /// </summary>
         public string OutputAssemblyFileName = null;
@@ -85,10 +93,6 @@ namespace JIEJIE
         /// 执行调用堆栈翻译的映射XML文件名
         /// </summary>
         public string TranslateStackTraceUseMapXml = null;
-        /// <summary>
-        /// 计算成员方法的大小（包括指令数量，字符串，引用的字节数组大小）
-        /// </summary>
-        public bool MeasureSizeOfMethod = false;
         /// <summary>
         /// SNK文件名
         /// </summary>
@@ -488,7 +492,6 @@ namespace JIEJIE
                 eng.PrefixForTypeRename = this.PrefixForTypeRename;
                 eng.ResourceNameNeedEncrypt = this.ResourceNameNeedEncrypt;
                 eng.OutpuptMapXml = this.OutpuptMapXml;
-                eng.MeasureSizeOfMethod = this.MeasureSizeOfMethod;
                 eng.DeleteTempFile = this.DeleteTempFile;
                 eng.DebugMode = this.DebugMode;
                 eng.SnkFileName = this.SnkFileName;

@@ -14,6 +14,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace JIEJIE
@@ -91,7 +92,7 @@ namespace JIEJIE
             this.Parent = parent;
             this.Load(reader);
             this.HasGenericStyle = GetHasGenericStyle();
-            if (this.Name == "SMF_CreateEmptyTable")
+            if( this.Name == "SMF_CreateEmptyTable")
             {
 
             }
@@ -103,61 +104,6 @@ namespace JIEJIE
             //{
 
             //}
-        }
-        public string[] GetStringValues()
-        {
-            var list = new System.Collections.Generic.List<string>();
-            this.EnumOperCodes(delegate (EnumOperCodeArgs args)
-            {
-                if (args.Current is DCILOperCode_LoadString)
-                {
-                    var lds = (DCILOperCode_LoadString)args.Current;
-                    if ( lds.Value != null 
-                        &&  lds.Value.Length > 0 
-                        && list.Contains(lds.Value) == false)
-                    {
-                        list.Add(lds.Value);
-                    }
-                }
-            });
-            list.Sort();
-            return list.ToArray();
-        }
-    
-
-        /// <summary>
-        /// 获得方法中快速初始化数组的字节数大小
-        /// </summary>
-        /// <param name="eng"></param>
-        /// <returns></returns>
-        public int GetByteArraySize(DCJieJieNetEngine eng)
-        {
-            var bytesArraySize = 0;
-            this.EnumOperCodes(delegate (EnumOperCodeArgs args)
-            {
-                var callCode = args.Current as DCILOperCode_HandleMethod;
-                if (callCode != null
-                    && callCode.MatchTypeAndMethod(
-                        "System.Runtime.CompilerServices.RuntimeHelpers",
-                        "InitializeArray",
-                        2))
-                {
-                    var items = args.OwnerList;
-                    var codeIndex = args.CurrentCodeIndex;
-                    var ldTokenCode = items[codeIndex - 1] as DCILOperCode_LdToken;
-                    var data = ldTokenCode.FieldReference?.LocalField?.ReferenceData?.Value;
-                    if (data is byte[])
-                    {
-                        bytesArraySize += ((byte[])data).Length;
-                    }
-                    else if (data is string)
-                    {
-                        bytesArraySize += ((string)data).Length;
-                    }
-                }
-            });
-
-            return bytesArraySize;
         }
 
         private static readonly List<string> _NewLabelIDList = new List<string>();
@@ -463,6 +409,10 @@ namespace JIEJIE
             DCILDocument document,
             DCILGenericParamterList typeGps) : base(method)
         {
+            if(method.Name.Equals("WriteLog", StringComparison.CurrentCultureIgnoreCase))
+            {
+
+            }
             this.IsFromInterface = method.DeclaringType.IsInterface;
             this._NativeMethod = method;
             var declaringType = method.DeclaringType;
@@ -847,6 +797,10 @@ namespace JIEJIE
                 }
             }
             this._Name = reader.ReadWord();
+            if (this._Name.Equals("WriteLog", StringComparison.CurrentCultureIgnoreCase))
+            {
+
+            }
             var starChar = reader.ReadContentChar();
             if (starChar == '<')
             {
@@ -1153,16 +1107,43 @@ namespace JIEJIE
                 {
                     this.ReadCustomAttribute(reader);
                 }
-                else if (strWord == ".param")
+                else if (strWord == ".param")// 处理可选参数param
                 {
                     var line = reader.ReadLine();
+                    //if (this._Name.Equals("WriteLog")|| this._Name.Equals("App"))
+                    //{
+                    
+                    //    this.Parameters[this.Parameters.Count-1].ValueType.Name = "params " + this.Parameters[this.Parameters.Count - 1].ValueType.Name;
+                    //}
                     int index = line.IndexOf('=');
                     if (index > 0)
                     {
                         var pIndex = DCILReader.ParseArrayIndex(line.Substring(0, index));
                         if (pIndex >= 0 && pIndex <= this.Parameters.Count)
                         {
+                            //this.Parameters[pIndex - 1].ValueType.IsParams = true;
                             this.Parameters[pIndex - 1].DefaultValue = line.Substring(index + 1).Trim();
+                        }
+                    }
+                    else
+                    {
+                        if (this.Parameters is not null)
+                        {
+                            var pIndex = DCILReader.ParseArrayIndex(line);
+                            if (pIndex > 0 && pIndex <= this.Parameters.Count)
+                            {
+                                try
+                                {
+
+                                    //this.Parameters[pIndex - 1].ValueType.IsParams = true;
+                                    this.Parameters[pIndex - 1].DefaultValue = "";
+                                }
+                                catch (Exception ex)
+                                {
+
+                                    throw;
+                                }
+                            }
                         }
                     }
                 }
@@ -1440,17 +1421,63 @@ namespace JIEJIE
             {
                 writer.Write(".entrypoint");
             }
-            base.WriteCustomAttributes(writer);
             if (this.Parameters != null && this.Parameters.Count > 0)
             {
-                for (int iCount = 0; iCount < this.Parameters.Count; iCount++)
+                if (base.CustomAttributes is not null && base.CustomAttributes.Exists(item => item.AttributeTypeName.Contains("Microsoft.AspNetCore.Mvc.")))
                 {
-                    var p = this.Parameters[iCount];
-                    if (p.DefaultValue != null && p.DefaultValue.Length > 0)
+                    base.WriteCustomAttributes(writer);
+                    if (this.Parameters.Count == 1 || (this.Parameters.Count > 1 && this.Parameters[1].DefaultValue == null))
                     {
-                        writer.WriteLine(".param [" + Convert.ToString(iCount + 1) + "] = " + p.DefaultValue);
+                        for (int iCount = 0; iCount < this.Parameters.Count; iCount++)
+                        {
+                            var p = this.Parameters[iCount];
+                            if (p.DefaultValue != null)
+                            {
+                                if (p.DefaultValue.Length > 0)
+                                    writer.WriteLine(".param [" + Convert.ToString(iCount + 1) + "] = " + p.DefaultValue);
+                                else
+                                    writer.WriteLine(".param [" + Convert.ToString(iCount + 1) + "]");
+                            }
+                        }
                     }
                 }
+                else
+                {
+                    if (this.Parameters.Count == 1 || (this.Parameters.Count > 1 && this.Parameters[1].DefaultValue == null))
+                    {
+                        for (int iCount = 0; iCount < this.Parameters.Count; iCount++)
+                        {
+                            var p = this.Parameters[iCount];
+                            if (p.DefaultValue != null)
+                            {
+                                if (p.DefaultValue.Length > 0)
+                                    writer.WriteLine(".param [" + Convert.ToString(iCount + 1) + "] = " + p.DefaultValue);
+                                else
+                                    writer.WriteLine(".param [" + Convert.ToString(iCount + 1) + "]");
+                            }
+                        }
+                        base.WriteCustomAttributes(writer);
+                    }
+                    else
+                    {
+                        base.WriteCustomAttributes(writer);
+                        for (int iCount = 0; iCount < this.Parameters.Count; iCount++)
+                        {
+                            var p = this.Parameters[iCount];
+                            if (p.DefaultValue != null)
+                            {
+                                if (p.DefaultValue.Length > 0)
+                                    writer.WriteLine(".param [" + Convert.ToString(iCount + 1) + "] = " + p.DefaultValue);
+                                else
+                                    writer.WriteLine(".param [" + Convert.ToString(iCount + 1) + "]");
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                base.WriteCustomAttributes(writer);
             }
             if (this.permission != null && this.permission.Length > 0)
             {
@@ -1479,7 +1506,7 @@ namespace JIEJIE
             }
             if (this.Maxstack >= 0)
             {
-                writer.WriteLine(".maxstack " + Convert.ToString( this.Maxstack  + this.MaxstackFix ));
+                writer.WriteLine(".maxstack " + Convert.ToString( this.Maxstack + this.MaxstackFix ));
             }
             if (this.Locals != null && this.Locals.Count > 0)
             {

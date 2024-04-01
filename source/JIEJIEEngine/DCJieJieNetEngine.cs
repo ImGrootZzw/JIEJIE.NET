@@ -1247,12 +1247,7 @@ namespace JIEJIE
                     var comXmlFileName = Path.ChangeExtension(asmFileName, ".xml");
                     WriteDocumentCommentXml(comXmlFileName);
                 }
-                if( this.MeasureSizeOfMethod && this._SizeOfMethod != null )
-                {
-                    var fn6 = asmFileName + ".SizeOfMethod.xml";
-                    this._SizeOfMethod.Save( fn6);
-                    MyConsole.Instance.WriteLine("    Write " + fn6);
-                }
+
                 MyConsole.Instance.WriteLine();
                 ConsoleWriteTask();
                 MyConsole.Instance.Write("Job finished, final save to :");
@@ -1857,7 +1852,7 @@ namespace JIEJIE
             }
 
             var doc = new DCILDocument();
-            doc.LoadByReader(ilFileName, this.ContentEncoding);
+            doc.LoadByReader(ilFileName, this.ContentEncoding); // 这里报错
             doc.AssemblyFileName = asmFileName;
             doc.FileSize = (int)(new System.IO.FileInfo(asmFileName).Length);
             doc.RootPath = Path.GetDirectoryName(ilFileName);
@@ -1962,7 +1957,6 @@ namespace JIEJIE
             this._CallOperCodes = new List<DCILOperCode_HandleMethod>();
             this.SelectUILanguage();
             var allMethods = this.Document.GetAllMethodHasOperCodes();
-            this.BuildSizeOfMethod();
             this.AddClassJIEJIEHelper();
             // 删除自定义特性
             this.RemoveCustomAttributes();
@@ -1973,7 +1967,6 @@ namespace JIEJIE
             }
             // 加密内嵌程序集资源
             this.EncryptEmbeddedResource(allMethods);
-            
             if (this.Switchs.ControlFlow)
             {
                 // 加密部分字符数值
@@ -2064,22 +2057,6 @@ namespace JIEJIE
             {
                 RemoveMember();
             }
-            if (this._JIEJIEHelper_LoadResourceSet_Used == false)
-            {
-                var nodes5 = this._Type_JIEJIEHelper?.LocalClass?.ChildNodes;
-                if (nodes5 != null)
-                {
-                    foreach (var item in nodes5)
-                    {
-                        if (item.Name == "LoadResourceSet")
-                        {
-                            nodes5.Remove(item);
-                            break;
-                        }
-                    }
-                }
-
-            }
             this.InjectPerformanceCounter();
             foreach (var asm in this.Document.Assemblies)
             {
@@ -2097,137 +2074,6 @@ namespace JIEJIE
                 }
             }
             SelfPerformanceCounterForTest.Leave(h4);
-        }
-
-        /// <summary>
-        /// 计算成员方法的大小（包括指令数量，字符串，引用的字节数组大小）
-        /// </summary>
-        public bool MeasureSizeOfMethod = false;
-
-        private System.Xml.XmlDocument _SizeOfMethod = null;
-        /// <summary>
-        /// 计算成员方法的“大小”
-        /// </summary>
-        private void BuildSizeOfMethod()
-        {
-            if(this.MeasureSizeOfMethod == false )
-            {
-                return;
-            }
-            ConsoleWriteTask();
-            MyConsole.Instance.Write("Measure sizeof method...");
-            var tick = Environment.TickCount;
-            var doc = new System.Xml.XmlDocument();
-            doc.AppendChild(doc.CreateElement("SizeOfMethod"));
-            doc.DocumentElement.SetAttribute("AssemblyName", this.Document.AssemblyFileName);
-            doc.DocumentElement.SetAttribute("Creationtime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-            var strTable = new System.Collections.Generic.SortedDictionary<string, List<DCILMethod>>();
-            var types = new List<DCILClass>(this.Document.GetAllClassesUseCache().Values);
-            types.Sort(delegate (DCILClass c1, DCILClass c2) { return string.Compare(c1.Name, c2.Name); });
-            foreach (var type in types)
-            {
-                if (type.ChildNodes == null || type.ChildNodes.Count == 0)
-                {
-                    continue;
-                }
-                var typeElement = doc.CreateElement("Type");
-                typeElement.SetAttribute("Name", type.NameWithNested);
-                foreach (var item in type.ChildNodes)
-                {
-                    if (item is DCILMethod)
-                    {
-                        var method = (DCILMethod)item;
-                        var opcCount = method.TotalOperCodesCount;
-                        if (opcCount == 0)
-                        {
-                            continue;
-                        }
-                        var methodElement = doc.CreateElement("Method");
-                        methodElement.SetAttribute("Name", method.Name);
-                        methodElement.SetAttribute("OperCodeCount", opcCount.ToString());
-                        var size9 = method.GetByteArraySize(this);
-                        if (size9 > 0)
-                        {
-                            methodElement.SetAttribute("ArraySize", method.GetByteArraySize(this).ToString());
-                        }
-                        methodElement.SetAttribute("Sign", method.GetSignString());
-                        var strs = method.GetStringValues();
-                        if (strs != null && strs.Length > 0)
-                        {
-                            foreach (var str in strs)
-                            {
-                                var strElement = doc.CreateElement("String");
-                                strElement.SetAttribute("Length", str.Length.ToString());
-                                strElement.InnerText = str;
-                                methodElement.AppendChild(strElement);
-                                List<DCILMethod> methods = null;
-                                if( strTable.TryGetValue( str , out methods ) == false )
-                                {
-                                    methods = new List<DCILMethod>();
-                                    strTable[str] = methods;
-                                }
-                                methods.Add(method);
-                            }
-                        }
-                        if (DCILMethod.IsCtorOrCctor(method.Name))
-                        {
-                            typeElement.PrependChild(methodElement);
-                        }
-                        else
-                        {
-                            typeElement.AppendChild(methodElement);
-                        }
-                    }
-                }//foreach
-                if (typeElement.FirstChild != null)
-                {
-                    doc.DocumentElement.AppendChild(typeElement);
-                }
-            }//foreach
-            if( strTable.Count > 0 )
-            {
-                var tableElements = doc.CreateElement("Strings");
-                doc.DocumentElement.AppendChild(tableElements);
-                var strList = new List<string>(strTable.Keys);
-                strList.Sort(delegate (string s1, string s2) {
-                    var result = s1.Length.CompareTo(s2.Length);
-                    if( result == 0 )
-                    {
-                        result = s1.CompareTo(s2);
-                    }
-                    return result;
-                });
-                tableElements.SetAttribute("Count", strList.Count.ToString());
-                var totalLength = 0;
-                foreach( var strItem in strList)
-                {
-                    totalLength += strItem.Length;
-                    var strElement = doc.CreateElement("String");
-                    var methods = strTable[strItem];
-                    strElement.SetAttribute("Length", strItem.Length.ToString());
-                    strElement.SetAttribute("Value", strItem);
-                    DCILClass lastClass = null;
-                    foreach( var m in methods)
-                    {
-                        if( lastClass == null || m.OwnerClass != lastClass)
-                        {
-                            
-                        }
-                        var me2 = doc.CreateElement("Method");
-                        me2.SetAttribute("Name", m.OwnerClass.NameWithNested +"::" +m.Name);
-                        //me2.SetAttribute("Sign", m.GetSignatureForMap());
-                        strElement.AppendChild(me2);
-                    }
-                    tableElements.AppendChild(strElement);
-                }
-                tableElements.SetAttribute("TotalLength", totalLength.ToString());
-            }
-            if (doc.DocumentElement.FirstChild != null)
-            {
-                this._SizeOfMethod = doc;
-            }
-            tick = Environment.TickCount - tick;
-            MyConsole.Instance.WriteLine(" span " + tick + " milliseconds.");
         }
 
         private void InjectPerformanceCounter()
@@ -3178,6 +3024,10 @@ namespace JIEJIE
             var resultMap = new MethodOverrideMap();
             foreach (var cls in allClasses)
             {
+                if (cls.Name.Equals("CoreWebAPI.Common.LogHelper.SerilogHelper", StringComparison.CurrentCultureIgnoreCase))
+                {
+
+                }
                 if (cls.IsMulticastDelegate)
                 {
                     continue;
@@ -3393,11 +3243,11 @@ namespace JIEJIE
                 var methods = methodGrounds[iCount];
                 foreach( var item in methods)
                 {
-                    //if( item.Name == "get_Handle")
-                    //    //&& item.OwnerClass?.Name == "DCSoft.ShapeEditor.Controls.ShapeEditorControl")
-                    //{
+                    if( item.Name == "get_Handle")
+                        //&& item.OwnerClass?.Name == "DCSoft.ShapeEditor.Controls.ShapeEditorControl")
+                    {
 
-                    //}
+                    }
                 }
                 if( this.DetectDeadCode == DetectDeadCodeMode.Normal 
                     || this.DetectDeadCode == DetectDeadCodeMode.All)
@@ -4146,12 +3996,20 @@ namespace JIEJIE
                     if (item is DCILMemberInfo)
                     {
                         var m = (DCILMemberInfo)item;
+                        if(m.Parent.Name == "CoreWebAPI.Common.LogHelper.SerilogHelper")
+                        {
+
+                        }
                         if (item is DCILField && cls.InnerGenerate)
                         {
                             // 内部产生的类型，不保留旧名称
                             continue;
                         }
                         m.OldSignatureForMap = m.GetSignatureForMap();
+                        if (m.OldSignatureForMap.Contains("SerilogHelper.WriteLog"))
+                        {
+
+                        }
                     }
                 }//foreach
             }//foreach
@@ -4167,6 +4025,10 @@ namespace JIEJIE
             int nestedClassCounter = 0;
             foreach (var cls in allClasses)
             {
+                if (cls.Name.Equals("CoreWebAPI.Common.LogHelper.SerilogHelper", StringComparison.CurrentCultureIgnoreCase))
+                {
+
+                }
                 if (cls.IsImport)
                 {
                     // 外界导入的COM接口，则不改名
@@ -4401,9 +4263,9 @@ namespace JIEJIE
             int totalCount_Method = 0;
             int handleCount_Method = 0;
             int removeCount_PropertyEvent = 0;
+            var childNeedRemove = new List<DCILObject>();
             foreach (var cls in allClasses)
             {
-                var childNeedRemove = new List<DCILObject>();
                 if (cls.InnerGenerate == false)
                 {
                     totalCount_cls++;
@@ -4453,18 +4315,18 @@ namespace JIEJIE
                                 handleCount_Method++;
                                 RenameMethodParameter(method);
 
-                                if (this.Switchs.RemoveMember)
-                                {
-                                    if (method.IsSpecialname)
-                                    {
-                                        method.RemoveStyle("specialname");
-                                        method.IsSpecialname = false;
-                                    }
-                                    if (method.ParentMember != null && childNeedRemove.Contains( method.ParentMember ) == false )
-                                    {
-                                        childNeedRemove.Add(method.ParentMember);
-                                    }
-                                }
+                                //if (this.Switchs.RemoveMember)
+                                //{
+                                //    if (method.IsSpecialname)
+                                //    {
+                                //        method.RemoveStyle("specialname");
+                                //        method.IsSpecialname = false;
+                                //    }
+                                //    if (method.ParentMember != null)
+                                //    {
+                                //        childNeedRemove.Add(method.ParentMember);
+                                //    }
+                                //}
                             }
                             else if (cls.RenameState == DCILRenameState.Renamed && DCILMethod.IsCtorOrCctor(method.Name))
                             {
@@ -4474,27 +4336,27 @@ namespace JIEJIE
                     }
                 }
 
-                if (childNeedRemove.Count > 0)
-                {
-                    removeCount_PropertyEvent += childNeedRemove.Count;
-                    foreach (var item in childNeedRemove)
-                    {
-                        if (item is DCILProperty)
-                        {
-                            var p = (DCILProperty)item;
-                            if (p.Method_Get?.LocalMethod != null)
-                            {
-                                p.Method_Get.LocalMethod.IsSpecialname = false;
-                            }
-                            if (p.Method_Set?.LocalMethod != null)
-                            {
-                                p.Method_Set.LocalMethod.IsSpecialname = false;
-                            }
-                        }
-                        cls.ChildNodes.Remove(item);
-                    }
-                    childNeedRemove.Clear();
-                }
+                //if (childNeedRemove.Count > 0)
+                //{
+                //    removeCount_PropertyEvent += childNeedRemove.Count;
+                //    foreach (var item in childNeedRemove)
+                //    {
+                //        //if(item is DCILProperty)
+                //        //{
+                //        //    var p = (DCILProperty)item;
+                //        //    if(p.Method_Get?.LocalMethod != null )
+                //        //    {
+                //        //        p.Method_Get.LocalMethod.IsSpecialname = false;
+                //        //    }
+                //        //    if(p.Method_Set?.LocalMethod != null )
+                //        //    {
+                //        //        p.Method_Set.LocalMethod.IsSpecialname = false;
+                //        //    }
+                //        //}
+                //        cls.ChildNodes.Remove(item);
+                //    }
+                //    childNeedRemove.Clear();
+                //}
             }
             tick = Math.Abs(Environment.TickCount - tick);
             if (MyConsole.Instance.IsNativeConsole)
@@ -5232,33 +5094,7 @@ namespace JIEJIE
                 return cls;
             }
         }
-        private string _BitmapTypeName = null;
-        /// <summary>
-        /// 获得位图对象类型名称
-        /// </summary>
-        /// <returns></returns>
-        private string GetBitmapTypeName()
-        {
-            if (_BitmapTypeName == null)
-            {
-                foreach (var cls in this.Document.Classes)
-                {
-                    if (cls.Name == "DCSystem_Drawing.Bitmap")
-                    {
-                        // 这是一个神秘的判断，嘿嘿。
-                        _BitmapTypeName = cls.Name;
-                        break;
-                    }
-                }
-                if (_BitmapTypeName == null)
-                {
-                    _BitmapTypeName = this.Document.GetTypeNameWithLibraryName(
-                       "System.Drawing.Bitmap",
-                       typeof(System.Drawing.Bitmap).Assembly.GetName().Name);
-                }
-            }
-            return _BitmapTypeName;
-        }
+
         public void ApplyResouceContainerClass()
         {
             ConsoleWriteTask();
@@ -5285,8 +5121,9 @@ namespace JIEJIE
             var cls_resIndex = new Dictionary<DCILClass, int>();
             var allRes = this.Document.GetNodeIndexs<DCILMResource>();
             var allResNames = new List<string>();
-            var bmpTypeName = this.GetBitmapTypeName();
-            
+            var bmpTypeName = this.Document.GetTypeNameWithLibraryName(
+               "System.Drawing.Bitmap",
+               typeof(System.Drawing.Bitmap).Assembly.GetName().Name);
             foreach (var cls in this.Document.Classes)
             {
                 if (cls.IsResoucePackage() == false)
@@ -5524,8 +5361,6 @@ namespace JIEJIE
             }//for
         }
 
-        private bool _JIEJIEHelper_LoadResourceSet_Used = false;
-
         private static readonly string LibNameForComponentResourceManager 
             = typeof(System.ComponentModel.ComponentResourceManager).Assembly.GetName().Name;
         public bool ChangeComponentResourceManager(DCILClass cls)
@@ -5583,7 +5418,6 @@ namespace JIEJIE
                                         || code2.InvokeInfo.OwnerType.Name == "System.Resources.ResourceManager"))
                                     {
                                         var bsWrite = GetBytesForWrite(res.Data);// GetGZipCompressedContentIfNeed(bs);
-                                        this._JIEJIEHelper_LoadResourceSet_Used = true;
                                         string clsName = _ClassNamePrefix + "Res" + AllocIndex();
                                         string strNewClassCode = FixTypeLibNameForNetCore(CodeTemplate._Code_Template_ComponentResourceManager);
                                         //strNewClassCode = strNewClassCode.Replace("mscorlib", this.Document.LibName_mscorlib);
@@ -5696,7 +5530,7 @@ namespace JIEJIE
 
         private void AddClassJIEJIEHelper()
         {
-            var code = FixTypeLibNameForNetCore(CodeTemplate._Code_Template_JIEJIEHelper.Replace("[System.Drawing]System.Drawing.Bitmap", this.GetBitmapTypeName()));
+            var code = FixTypeLibNameForNetCore(CodeTemplate._Code_Template_JIEJIEHelper);
             var cls = new DCILClass(code, this.Document);
             this.Document.Classes.Add(cls);
             this.Document.ClearCacheForAllClasses();

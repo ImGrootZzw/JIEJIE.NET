@@ -164,6 +164,7 @@ namespace JIEJIE
             DCILMethodParamter mp = null;
             while (reader.HasContentLeft())
             {
+                var ss = reader.Document;
                 var word = reader.ReadWord();
                 if (word == ")")
                 {
@@ -271,6 +272,10 @@ namespace JIEJIE
                     {
                         writer.Write("[opt] ");
                     }
+                    //if (p.ValueType.IsParams)
+                    //{
+                    //    writer.Write("params ");
+                    //}
                     if (forSignString)
                     {
                         p.ValueType.WriteTo(writer, true, false);

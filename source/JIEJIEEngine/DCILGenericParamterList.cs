@@ -213,7 +213,7 @@ namespace JIEJIE
             return null;
         }
 
-        public void WriteTo(DCILWriter writer)
+        public void WriteTo(DCILWriter writer) // 写可选参数
         {
             if (this.Count > 0)
             {

@@ -44,6 +44,9 @@ namespace JIEJIE
                 case DCILEditorAttribute.ConstAttributeTypeName:
                     result = new DCILEditorAttribute();
                     break;
+                case DCILParameterAttribute.ConstAttributeTypeName:
+                    result = new DCILParameterAttribute();
+                    break;
                 default:
                     result = new DCILCustomAttribute();
                     break;

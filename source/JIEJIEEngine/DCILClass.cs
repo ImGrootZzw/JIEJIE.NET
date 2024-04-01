@@ -599,7 +599,7 @@ namespace JIEJIE
             InnerWriteTo(writer, false);
         }
 
-        public void InnerWriteTo( DCILWriter writer , bool declearationOnly )
+        public void InnerWriteTo( DCILWriter writer , bool declearationOnly ) // 写目标il，修改方法添加可选参数
         { 
             if(this.RenameState == DCILRenameState.Renamed )
             {
